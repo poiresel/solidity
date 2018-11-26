@@ -27,6 +27,8 @@ set(sources
 	Visitor.h
 	Whiskers.cpp
 	Whiskers.h
+	termcolor.cpp
+	termcolor.h
 )
 
 add_library(devcore ${sources})
