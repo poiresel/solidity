@@ -1,3 +1,5 @@
+// Permission to use the following code for tuning the Solidity optimizer was granted
+// by the author in https://github.com/ethereum/solidity/pull/5713#issuecomment-449042830
 /**
  * @title Library to validate AZTEC zero-knowledge proofs
  * @author Zachary Williamson, AZTEC
