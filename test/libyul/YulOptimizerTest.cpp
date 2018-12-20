@@ -121,7 +121,7 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	}
 	else if (m_optimizerStep == "expressionSplitter")
 	{
-		NameDispenser nameDispenser(*m_ast);
+		NameDispenser nameDispenser{*m_dialect, *m_ast};
 		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 	}
 	else if (m_optimizerStep == "expressionJoiner")
@@ -132,7 +132,7 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	else if (m_optimizerStep == "splitJoin")
 	{
 		disambiguate();
-		NameDispenser nameDispenser(*m_ast);
+		NameDispenser nameDispenser{*m_dialect, *m_ast};
 		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 		ExpressionJoiner::run(*m_ast);
 		ExpressionJoiner::run(*m_ast);
@@ -150,14 +150,14 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	else if (m_optimizerStep == "expressionInliner")
 	{
 		disambiguate();
-		ExpressionInliner(*m_ast).run();
+		ExpressionInliner(*m_dialect, *m_ast).run();
 	}
 	else if (m_optimizerStep == "fullInliner")
 	{
 		disambiguate();
 		(FunctionHoister{})(*m_ast);
 		(FunctionGrouper{})(*m_ast);
-		NameDispenser nameDispenser(*m_ast);
+		NameDispenser nameDispenser{*m_dialect, *m_ast};
 		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 		FullInliner(*m_ast, nameDispenser).run();
 		ExpressionJoiner::run(*m_ast);
@@ -171,51 +171,51 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	else if (m_optimizerStep == "rematerialiser")
 	{
 		disambiguate();
-		(Rematerialiser{})(*m_ast);
+		(Rematerialiser{*m_dialect})(*m_ast);
 	}
 	else if (m_optimizerStep == "expressionSimplifier")
 	{
 		disambiguate();
-		ExpressionSimplifier::run(*m_ast);
+		ExpressionSimplifier::run(*m_dialect, *m_ast);
 	}
 	else if (m_optimizerStep == "fullSimplify")
 	{
 		disambiguate();
-		NameDispenser nameDispenser(*m_ast);
+		NameDispenser nameDispenser{*m_dialect, *m_ast};
 		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 		CommonSubexpressionEliminator{*m_dialect}(*m_ast);
-		ExpressionSimplifier::run(*m_ast);
-		UnusedPruner::runUntilStabilised(*m_ast);
+		ExpressionSimplifier::run(*m_dialect, *m_ast);
+		UnusedPruner::runUntilStabilised(*m_dialect, *m_ast);
 		ExpressionJoiner::run(*m_ast);
 		ExpressionJoiner::run(*m_ast);
 	}
 	else if (m_optimizerStep == "unusedPruner")
 	{
 		disambiguate();
-		UnusedPruner::runUntilStabilised(*m_ast);
+		UnusedPruner::runUntilStabilised(*m_dialect, *m_ast);
 	}
 	else if (m_optimizerStep == "ssaTransform")
 	{
 		disambiguate();
-		NameDispenser nameDispenser(*m_ast);
+		NameDispenser nameDispenser{*m_dialect, *m_ast};
 		SSATransform::run(*m_ast, nameDispenser);
 	}
 	else if (m_optimizerStep == "redundantAssignEliminator")
 	{
 		disambiguate();
-		RedundantAssignEliminator::run(*m_ast);
+		RedundantAssignEliminator::run(*m_dialect, *m_ast);
 	}
 	else if (m_optimizerStep == "ssaPlusCleanup")
 	{
 		disambiguate();
-		NameDispenser nameDispenser(*m_ast);
+		NameDispenser nameDispenser{*m_dialect, *m_ast};
 		SSATransform::run(*m_ast, nameDispenser);
-		RedundantAssignEliminator::run(*m_ast);
+		RedundantAssignEliminator::run(*m_dialect, *m_ast);
 	}
 	else if (m_optimizerStep == "structuralSimplifier")
 	{
 		disambiguate();
-		StructuralSimplifier{}(*m_ast);
+		StructuralSimplifier{*m_dialect}(*m_ast);
 	}
 	else if (m_optimizerStep == "fullSuite")
 		OptimiserSuite::run(*m_dialect, *m_ast, *m_analysisInfo);
@@ -290,7 +290,7 @@ bool YulOptimizerTest::parse(ostream& _stream, string const& _linePrefix, bool c
 
 void YulOptimizerTest::disambiguate()
 {
-	*m_ast = boost::get<Block>(Disambiguator(*m_analysisInfo)(*m_ast));
+	*m_ast = boost::get<Block>(Disambiguator(*m_dialect, *m_analysisInfo)(*m_ast));
 	m_analysisInfo.reset();
 }
 

@@ -32,6 +32,8 @@ namespace yul
  */
 class Rematerialiser: public DataFlowAnalyzer
 {
+public:
+	explicit Rematerialiser(Dialect const& _dialect): DataFlowAnalyzer(_dialect) {}
 protected:
 	using ASTModifier::visit;
 	void visit(Expression& _e) override;

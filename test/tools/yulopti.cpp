@@ -120,9 +120,9 @@ public:
 				return;
 			if (!disambiguated)
 			{
-				*m_ast = boost::get<yul::Block>(Disambiguator(*m_analysisInfo)(*m_ast));
+				*m_ast = boost::get<yul::Block>(Disambiguator(*m_dialect, *m_analysisInfo)(*m_ast));
 				m_analysisInfo.reset();
-				m_nameDispenser = make_shared<NameDispenser>(*m_ast);
+				m_nameDispenser = make_shared<NameDispenser>(*m_dialect, *m_ast);
 				disambiguated = true;
 			}
 			cout << "(q)quit/(f)flatten/(c)se/initialize var(d)ecls/(x)plit/(j)oin/(g)rouper/(h)oister/" << endl;
@@ -161,28 +161,28 @@ public:
 				(FunctionHoister{})(*m_ast);
 				break;
 			case 'e':
-				ExpressionInliner{*m_ast}.run();
+				ExpressionInliner{*m_dialect, *m_ast}.run();
 				break;
 			case 'i':
 				FullInliner(*m_ast, *m_nameDispenser).run();
 				break;
 			case 's':
-				ExpressionSimplifier::run(*m_ast);
+				ExpressionSimplifier::run(*m_dialect, *m_ast);
 				break;
 			case 't':
-				(StructuralSimplifier{})(*m_ast);
+				(StructuralSimplifier{*m_dialect})(*m_ast);
 				break;
 			case 'u':
-				UnusedPruner::runUntilStabilised(*m_ast);
+				UnusedPruner::runUntilStabilised(*m_dialect, *m_ast);
 				break;
 			case 'a':
 				SSATransform::run(*m_ast, *m_nameDispenser);
 				break;
 			case 'r':
-				RedundantAssignEliminator::run(*m_ast);
+				RedundantAssignEliminator::run(*m_dialect, *m_ast);
 				break;
 			case 'm':
-				Rematerialiser{}(*m_ast);
+				Rematerialiser{*m_dialect}(*m_ast);
 				break;
 			default:
 				cout << "Unknown option." << endl;
