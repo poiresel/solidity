@@ -85,7 +85,7 @@ public:
 	{
 		ErrorReporter errorReporter(m_errors);
 		shared_ptr<Scanner> scanner = make_shared<Scanner>(CharStream(_input, ""));
-		m_ast = yul::Parser(errorReporter, yul::EVMDialect::strictAssemblyForEVM()).parse(scanner, false);
+		m_ast = yul::Parser(errorReporter, m_dialect).parse(scanner, false);
 		if (!m_ast || !errorReporter.errors().empty())
 		{
 			cout << "Error parsing source." << endl;
@@ -98,7 +98,7 @@ public:
 			errorReporter,
 			EVMVersion::byzantium(),
 			langutil::Error::Type::SyntaxError,
-			EVMDialect::strictAssemblyForEVM()
+			m_dialect
 		);
 		if (!analyzer.analyze(*m_ast) || !errorReporter.errors().empty())
 		{
@@ -143,13 +143,13 @@ public:
 				ForLoopInitRewriter{}(*m_ast);
 				break;
 			case 'c':
-				(CommonSubexpressionEliminator{})(*m_ast);
+				(CommonSubexpressionEliminator{*m_dialect})(*m_ast);
 				break;
 			case 'd':
 				(VarDeclInitializer{})(*m_ast);
 				break;
 			case 'x':
-				ExpressionSplitter{*m_nameDispenser}(*m_ast);
+				ExpressionSplitter{*m_dialect, *m_nameDispenser}(*m_ast);
 				break;
 			case 'j':
 				ExpressionJoiner::run(*m_ast);
@@ -194,6 +194,7 @@ public:
 private:
 	ErrorList m_errors;
 	shared_ptr<yul::Block> m_ast;
+	shared_ptr<Dialect> m_dialect{EVMDialect::strictAssemblyForEVMObjects()};
 	shared_ptr<AsmAnalysisInfo> m_analysisInfo;
 	shared_ptr<NameDispenser> m_nameDispenser;
 };

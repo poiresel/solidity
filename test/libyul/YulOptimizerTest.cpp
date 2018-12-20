@@ -117,12 +117,12 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	else if (m_optimizerStep == "commonSubexpressionEliminator")
 	{
 		disambiguate();
-		(CommonSubexpressionEliminator{})(*m_ast);
+		(CommonSubexpressionEliminator{*m_dialect})(*m_ast);
 	}
 	else if (m_optimizerStep == "expressionSplitter")
 	{
 		NameDispenser nameDispenser(*m_ast);
-		ExpressionSplitter{nameDispenser}(*m_ast);
+		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 	}
 	else if (m_optimizerStep == "expressionJoiner")
 	{
@@ -133,7 +133,7 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	{
 		disambiguate();
 		NameDispenser nameDispenser(*m_ast);
-		ExpressionSplitter{nameDispenser}(*m_ast);
+		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 		ExpressionJoiner::run(*m_ast);
 		ExpressionJoiner::run(*m_ast);
 	}
@@ -158,7 +158,7 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 		(FunctionHoister{})(*m_ast);
 		(FunctionGrouper{})(*m_ast);
 		NameDispenser nameDispenser(*m_ast);
-		ExpressionSplitter{nameDispenser}(*m_ast);
+		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
 		FullInliner(*m_ast, nameDispenser).run();
 		ExpressionJoiner::run(*m_ast);
 	}
@@ -182,8 +182,8 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 	{
 		disambiguate();
 		NameDispenser nameDispenser(*m_ast);
-		ExpressionSplitter{nameDispenser}(*m_ast);
-		CommonSubexpressionEliminator{}(*m_ast);
+		ExpressionSplitter{*m_dialect, nameDispenser}(*m_ast);
+		CommonSubexpressionEliminator{*m_dialect}(*m_ast);
 		ExpressionSimplifier::run(*m_ast);
 		UnusedPruner::runUntilStabilised(*m_ast);
 		ExpressionJoiner::run(*m_ast);
@@ -218,7 +218,7 @@ bool YulOptimizerTest::run(ostream& _stream, string const& _linePrefix, bool con
 		StructuralSimplifier{}(*m_ast);
 	}
 	else if (m_optimizerStep == "fullSuite")
-		OptimiserSuite::run(*m_ast, *m_analysisInfo);
+		OptimiserSuite::run(*m_dialect, *m_ast, *m_analysisInfo);
 	else
 	{
 		FormattedScope(_stream, _formatted, {formatting::BOLD, formatting::RED}) << _linePrefix << "Invalid optimizer step: " << m_optimizerStep << endl;
@@ -260,11 +260,11 @@ void YulOptimizerTest::printIndented(ostream& _stream, string const& _output, st
 
 bool YulOptimizerTest::parse(ostream& _stream, string const& _linePrefix, bool const _formatted)
 {
-	shared_ptr<yul::Dialect> dialect = m_yul ? yul::Dialect::yul() : yul::EVMDialect::strictAssemblyForEVM();
+	m_dialect = m_yul ? yul::Dialect::yul() : yul::EVMDialect::strictAssemblyForEVMObjects();
 	ErrorList errors;
 	ErrorReporter errorReporter(errors);
 	shared_ptr<Scanner> scanner = make_shared<Scanner>(CharStream(m_source, ""));
-	m_ast = yul::Parser(errorReporter, dialect).parse(scanner, false);
+	m_ast = yul::Parser(errorReporter, m_dialect).parse(scanner, false);
 	if (!m_ast || !errorReporter.errors().empty())
 	{
 		FormattedScope(_stream, _formatted, {formatting::BOLD, formatting::RED}) << _linePrefix << "Error parsing source." << endl;
@@ -277,7 +277,7 @@ bool YulOptimizerTest::parse(ostream& _stream, string const& _linePrefix, bool c
 		errorReporter,
 		dev::test::Options::get().evmVersion(),
 		boost::none,
-		dialect
+		m_dialect
 	);
 	if (!analyzer.analyze(*m_ast) || !errorReporter.errors().empty())
 	{

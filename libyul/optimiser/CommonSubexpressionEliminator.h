@@ -26,6 +26,8 @@
 namespace yul
 {
 
+struct Dialect;
+
 /**
  * Optimisation stage that replaces expressions known to be the current value of a variable
  * in scope by a reference to that variable.
@@ -34,9 +36,15 @@ namespace yul
  */
 class CommonSubexpressionEliminator: public DataFlowAnalyzer
 {
+public:
+	CommonSubexpressionEliminator(Dialect const& _dialect): m_dialect(_dialect) {}
+
 protected:
 	using ASTModifier::visit;
 	void visit(Expression& _e) override;
+
+private:
+	Dialect const& m_dialect;
 };
 
 }

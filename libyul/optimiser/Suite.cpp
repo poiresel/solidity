@@ -47,6 +47,7 @@ using namespace dev;
 using namespace yul;
 
 void OptimiserSuite::run(
+	Dialect const& _dialect,
 	Block& _ast,
 	AsmAnalysisInfo const& _analysisInfo,
 	set<YulString> const& _externallyUsedIdentifiers
@@ -66,19 +67,19 @@ void OptimiserSuite::run(
 
 	for (size_t i = 0; i < 4; i++)
 	{
-		ExpressionSplitter{dispenser}(ast);
+		ExpressionSplitter{_dialect, dispenser}(ast);
 		SSATransform::run(ast, dispenser);
 		RedundantAssignEliminator::run(ast);
 		RedundantAssignEliminator::run(ast);
 
-		CommonSubexpressionEliminator{}(ast);
+		CommonSubexpressionEliminator{_dialect}(ast);
 		ExpressionSimplifier::run(ast);
 		StructuralSimplifier{}(ast);
 		SSATransform::run(ast, dispenser);
 		RedundantAssignEliminator::run(ast);
 		RedundantAssignEliminator::run(ast);
 		UnusedPruner::runUntilStabilised(ast, reservedIdentifiers);
-		CommonSubexpressionEliminator{}(ast);
+		CommonSubexpressionEliminator{_dialect}(ast);
 		UnusedPruner::runUntilStabilised(ast, reservedIdentifiers);
 		SSATransform::run(ast, dispenser);
 		RedundantAssignEliminator::run(ast);
@@ -89,18 +90,18 @@ void OptimiserSuite::run(
 		ExpressionInliner(ast).run();
 		UnusedPruner::runUntilStabilised(ast);
 
-		ExpressionSplitter{dispenser}(ast);
+		ExpressionSplitter{_dialect, dispenser}(ast);
 		SSATransform::run(ast, dispenser);
 		RedundantAssignEliminator::run(ast);
 		RedundantAssignEliminator::run(ast);
-		CommonSubexpressionEliminator{}(ast);
+		CommonSubexpressionEliminator{_dialect}(ast);
 		FullInliner{ast, dispenser}.run();
 		SSATransform::run(ast, dispenser);
 		RedundantAssignEliminator::run(ast);
 		RedundantAssignEliminator::run(ast);
 		ExpressionSimplifier::run(ast);
 		StructuralSimplifier{}(ast);
-		CommonSubexpressionEliminator{}(ast);
+		CommonSubexpressionEliminator{_dialect}(ast);
 		SSATransform::run(ast, dispenser);
 		RedundantAssignEliminator::run(ast);
 		RedundantAssignEliminator::run(ast);
